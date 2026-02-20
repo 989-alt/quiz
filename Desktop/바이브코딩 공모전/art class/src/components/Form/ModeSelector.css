@@ -1,0 +1,43 @@
+.mode-sel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mode-sel__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mode-sel__tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.mode-sel__tab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    color: var(--text-secondary);
+}
+
+.mode-sel__tab--active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mode-sel__tab:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

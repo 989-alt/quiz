@@ -1,0 +1,54 @@
+.mandala-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mandala-presets__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mandala-presets__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.mandala-presets__chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.mandala-presets__chip:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.mandala-presets__chip--active {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.08);
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.mandala-presets__chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.mandala-presets__icon {
+    font-size: 22px;
+}

@@ -1,0 +1,63 @@
+.diff-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.diff-slider__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.diff-slider__options {
+    display: flex;
+    gap: 8px;
+}
+
+.diff-slider__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.diff-slider__btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.04);
+}
+
+.diff-slider__btn--active {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.08);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.diff-slider__btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.diff-slider__icon {
+    font-size: 20px;
+}
+
+.diff-slider__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.diff-slider__desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.3;
+}

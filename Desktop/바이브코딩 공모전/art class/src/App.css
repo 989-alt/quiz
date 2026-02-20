@@ -1,0 +1,151 @@
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9ff 0%, #fdf2f8 50%, #f0fdf4 100%);
+}
+
+/* ── Workspace Layout ── */
+.workspace {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 28px;
+  padding: 28px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+}
+
+.workspace__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+.workspace__canvas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workspace__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  border: 2px dashed rgba(0, 0, 0, 0.08);
+  text-align: center;
+  padding: 48px;
+}
+
+.workspace__empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.workspace__empty h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.workspace__empty p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.workspace__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Key Settings Modal ── */
+.key-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.key-modal {
+  background: white;
+  border-radius: 24px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.key-modal .onboarding {
+  min-height: auto;
+  background: none;
+  padding: 0;
+}
+
+.key-modal .onboarding__card {
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+}
+
+.key-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.key-modal__header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.key-modal__close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  padding: 4px;
+  color: var(--text-primary);
+}
+
+.key-modal__close:hover {
+  opacity: 1;
+}
+
+.key-modal__logout {
+  display: block;
+  width: calc(100% - 48px);
+  margin: 0 24px 24px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.04);
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.key-modal__logout:hover {
+  background: rgba(239, 68, 68, 0.08);
+}

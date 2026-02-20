@@ -1,0 +1,49 @@
+.quick-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-edit__warning {
+    font-size: 12px;
+    font-weight: 600;
+    color: #dc2626;
+    background: rgba(239, 68, 68, 0.06);
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.12);
+    text-align: center;
+}
+
+.quick-edit__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.quick-edit__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.quick-edit__chip:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(102, 126, 234, 0.06);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.quick-edit__chip:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
