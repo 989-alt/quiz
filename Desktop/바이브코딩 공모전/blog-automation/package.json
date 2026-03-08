@@ -1,0 +1,25 @@
+{
+  "name": "blog-automation",
+  "version": "1.0.0",
+  "description": "AI news auto-posting system for Google Blogger using Claude API",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "draft": "node src/index.js --draft",
+    "publish": "node src/index.js --publish",
+    "bot": "node src/telegram-bot.js",
+    "auth": "node src/auth.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@google/genai": "^1.0.0",
+    "dotenv": "^16.4.7",
+    "googleapis": "^146.0.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "pexels": "^1.4.0",
+    "rss-parser": "^3.13.0"
+  },
+  "keywords": ["blogger", "ai-news", "claude", "automation"],
+  "license": "MIT"
+}
