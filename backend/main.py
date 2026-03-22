@@ -405,8 +405,8 @@ async def analyze_content(
                                                 file_uri=youtubeUrl,
                                                 mime_type="video/*",
                                             ),
-                                            types.Part.from_text(
-                                                "이 영상의 내용을 상세하게 한국어로 정리해주세요. "
+                                            types.Part(
+                                                text="이 영상의 내용을 상세하게 한국어로 정리해주세요. "
                                                 "핵심 개념, 주요 내용, 중요 키워드를 포함해주세요."
                                             ),
                                         ]
