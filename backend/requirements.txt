@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+google-genai
+requests
+pytest
+python-docx
+yt-dlp
+youtube_transcript_api
+pypdf
