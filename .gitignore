@@ -2,7 +2,6 @@ node_modules/
 dist/
 .env
 .env.local
-.env.production
 __pycache__/
 *.pyc
 .vite/
