@@ -406,7 +406,34 @@ async def analyze_content(
                         texts.append(f"✓ 자막 추출 완료 ({len(transcript)}자)")
                         texts_by_file[f"YouTube_{video_id}"] = transcript[:20000]
                     else:
-                        texts.append("⚠️ 자막을 찾을 수 없습니다. 자막이 없는 영상이거나 비공개 영상일 수 있습니다.")
+                        # 자막이 없으면 Gemini로 YouTube URL 직접 분석
+                        texts.append("⏳ 자막 없음 — Gemini로 영상 분석 중... (1-2분 소요)")
+                        try:
+                            yt_response = client.models.generate_content(
+                                model="gemini-2.5-flash",
+                                contents=[
+                                    types.Content(
+                                        parts=[
+                                            types.Part.from_uri(
+                                                file_uri=youtubeUrl,
+                                                mime_type="video/*",
+                                            ),
+                                            types.Part.from_text(
+                                                "이 영상의 내용을 상세하게 한국어로 정리해주세요. "
+                                                "핵심 개념, 주요 내용, 중요 키워드를 포함해주세요."
+                                            ),
+                                        ]
+                                    )
+                                ],
+                            )
+                            if yt_response.text:
+                                texts.append(f"✓ Gemini 영상 분석 완료")
+                                texts_by_file[f"YouTube_{video_id}"] = yt_response.text[:20000]
+                            else:
+                                texts.append("⚠️ 영상 분석 결과가 비어 있습니다.")
+                        except Exception as ge:
+                            print(f"Gemini YouTube analysis error: {ge}")
+                            texts.append(f"⚠️ 영상 분석 실패: {str(ge)}")
                 except Exception as e:
                     print(f"YouTube processing error: {e}")
                     texts.append(f"⚠️ YouTube 처리 오류: {str(e)}")
