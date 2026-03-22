@@ -96,32 +96,19 @@ def get_youtube_transcript(video_id: str) -> Optional[str]:
     """Get YouTube transcript using youtube_transcript_api."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
 
-        # Try Korean first, then auto-generated Korean, then any available
-        transcript = None
-        for lang in ['ko', 'en']:
+        # Try Korean first, then English, then any available
+        for langs in [['ko'], ['en']]:
             try:
-                transcript = transcript_list.find_transcript([lang])
-                break
+                entries = YouTubeTranscriptApi.get_transcript(video_id, languages=langs)
+                text_parts = [entry['text'] for entry in entries]
+                return "\n".join(text_parts)
             except Exception:
                 continue
 
-        if transcript is None:
-            try:
-                generated = transcript_list.find_generated_transcript(['ko', 'en'])
-                transcript = generated
-            except Exception:
-                # Get whatever is available
-                for t in transcript_list:
-                    transcript = t
-                    break
-
-        if transcript is None:
-            return None
-
-        entries = transcript.fetch()
-        text_parts = [entry.text for entry in entries]
+        # Try without specifying language (gets default)
+        entries = YouTubeTranscriptApi.get_transcript(video_id)
+        text_parts = [entry['text'] for entry in entries]
         return "\n".join(text_parts)
     except Exception as e:
         print(f"YouTube transcript error: {e}")
