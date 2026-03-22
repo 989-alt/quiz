@@ -433,7 +433,7 @@ const BlooketGenerator = () => {
                         );
                       })}
                     </div>
-                    {loadingMsg && <p className="text-xs text-indigo-500 mt-2 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" />{loadingMsg}</p>}
+                    {loadingMsg && <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin text-indigo-600" /><p className="text-sm text-indigo-700 font-medium">{loadingMsg}</p></div>}
                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple accept={ALL_ACCEPT} />
                   </div>
                 )}
@@ -469,6 +469,7 @@ const BlooketGenerator = () => {
                   {youtubeUrl && (
                     <>
                       <button
+                        disabled={!!loadingMsg}
                         onClick={async () => {
                           if (!userApiKey) { setError('API 키가 필요합니다.'); return; }
                           setError('');
@@ -479,14 +480,14 @@ const BlooketGenerator = () => {
                           } catch (err) {
                             const msg = err.message;
                             if (msg.includes('500') || msg.includes('fetch') || msg.includes('Failed') || msg.includes('NetworkError')) {
-                              setError('⚠️ 영상 분석 서버에 연결할 수 없습니다. 터미널에서 "cd backend && python -m uvicorn main:app --reload" 실행 후 다시 시도해주세요.');
+                              setError('⚠️ 영상 분석 서버에 연결할 수 없습니다.');
                             } else {
                               setError('YouTube 분석 실패: ' + msg);
                             }
                           } finally { setLoadingMsg(''); }
                         }}
-                        className="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-lg hover:bg-indigo-200 transition-colors shrink-0"
-                      >분석</button>
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 flex items-center gap-1 ${loadingMsg ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
+                      >{loadingMsg ? <><Loader2 className="w-3 h-3 animate-spin" />분석 중...</> : '분석'}</button>
                       <button onClick={() => setYoutubeUrl('')} className="text-slate-400 hover:text-red-500">
                         <X className="w-4 h-4" />
                       </button>
