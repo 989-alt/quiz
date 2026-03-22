@@ -92,21 +92,40 @@ def get_youtube_video_id(url: str) -> Optional[str]:
     return None
 
 
-def download_youtube_video(url: str, output_path: str) -> bool:
+def get_youtube_transcript(video_id: str) -> Optional[str]:
+    """Get YouTube transcript using youtube_transcript_api."""
     try:
-        import yt_dlp
-        ydl_opts = {
-            'format': 'best[ext=mp4][height<=720]/best[ext=mp4]/best',
-            'outtmpl': output_path,
-            'quiet': True,
-            'no_warnings': True,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return os.path.exists(output_path)
+        from youtube_transcript_api import YouTubeTranscriptApi
+        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+
+        # Try Korean first, then auto-generated Korean, then any available
+        transcript = None
+        for lang in ['ko', 'en']:
+            try:
+                transcript = transcript_list.find_transcript([lang])
+                break
+            except Exception:
+                continue
+
+        if transcript is None:
+            try:
+                generated = transcript_list.find_generated_transcript(['ko', 'en'])
+                transcript = generated
+            except Exception:
+                # Get whatever is available
+                for t in transcript_list:
+                    transcript = t
+                    break
+
+        if transcript is None:
+            return None
+
+        entries = transcript.fetch()
+        text_parts = [entry.text for entry in entries]
+        return "\n".join(text_parts)
     except Exception as e:
-        print(f"YouTube download error: {e}")
-        return False
+        print(f"YouTube transcript error: {e}")
+        return None
 
 
 def extract_pdf_text(file_path: str) -> str:
@@ -379,22 +398,15 @@ async def analyze_content(
             if video_id:
                 texts.append(f"🎥 YouTube: {youtubeUrl}")
 
-                video_path = os.path.join(tempfile.gettempdir(), f"yt_{video_id}.mp4")
-                temp_paths.append(video_path)
-
                 try:
-                    texts.append("⏳ 영상 다운로드 중...")
-                    downloaded = await asyncio.to_thread(download_youtube_video, youtubeUrl, video_path)
+                    texts.append("⏳ 자막 추출 중...")
+                    transcript = await asyncio.to_thread(get_youtube_transcript, video_id)
 
-                    if downloaded and os.path.exists(video_path):
-                        texts.append("✓ 다운로드 완료, Gemini에 업로드 중...")
-                        g_file = await upload_to_gemini(client, video_path, "video/mp4")
-                        if g_file:
-                            gemini_files.append(g_file)
-                        else:
-                            texts.append("⚠️ Gemini 영상 업로드 실패 — API 키를 확인해주세요.")
+                    if transcript:
+                        texts.append(f"✓ 자막 추출 완료 ({len(transcript)}자)")
+                        texts_by_file[f"YouTube_{video_id}"] = transcript[:20000]
                     else:
-                        texts.append("⚠️ YouTube 다운로드 실패 — 비공개 영상이거나 지역 제한이 있을 수 있습니다.")
+                        texts.append("⚠️ 자막을 찾을 수 없습니다. 자막이 없는 영상이거나 비공개 영상일 수 있습니다.")
                 except Exception as e:
                     print(f"YouTube processing error: {e}")
                     texts.append(f"⚠️ YouTube 처리 오류: {str(e)}")
