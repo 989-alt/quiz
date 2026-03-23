@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FileText, Download, Trash2, Plus, Check, RefreshCw, X, RotateCcw, Key, FileSpreadsheet, Loader2, Layers, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
-import { analyzeVideos, analyzeFileWithGemini, generateQuizClient } from './api.js';
+import { analyzeVideos, analyzeFileWithGemini, analyzeYoutubeWithGemini, generateQuizClient } from './api.js';
 
 const CLIENT_TEXT = ['pptx', 'xlsx', 'xls', 'csv', 'txt'];
 const CLIENT_GEMINI = ['pdf', 'hwpx', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
@@ -177,21 +177,15 @@ const BlooketGenerator = () => {
       }
     }
 
-    // Process video files + YouTube URL via backend
-    const hasYoutube = youtubeUrl.trim().length > 0;
-    if (videoFiles.length > 0 || hasYoutube) {
+    // Process video files via backend (server needed for uploaded videos)
+    if (videoFiles.length > 0) {
       if (!userApiKey) {
         for (const f of videoFiles)
           combinedText += `\n--- [파일: ${f.name}] ---\n⚠️ 영상 분석에는 API 키가 필요합니다.\n`;
-        if (hasYoutube)
-          combinedText += `\n--- [YouTube] ---\n⚠️ YouTube 분석에는 API 키가 필요합니다.\n`;
       } else {
-        const label = hasYoutube && videoFiles.length > 0
-          ? `영상 ${videoFiles.length}개 + YouTube`
-          : hasYoutube ? 'YouTube 영상' : `영상 ${videoFiles.length}개`;
-        setLoadingMsg(`${label}을 서버에서 분석 중... (2-3분 소요)`);
+        setLoadingMsg(`영상 ${videoFiles.length}개를 서버에서 분석 중... (2-3분 소요)`);
         try {
-          const result = await analyzeVideos(userApiKey, videoFiles, hasYoutube ? youtubeUrl : '');
+          const result = await analyzeVideos(userApiKey, videoFiles, '');
           if (result.text) combinedText += `\n${result.text}\n`;
         } catch (err) {
           const isNetwork = err.message.includes('fetch') || err.message.includes('Failed');
@@ -200,8 +194,22 @@ const BlooketGenerator = () => {
             : `영상 분석 실패: ${err.message}`;
           for (const f of videoFiles)
             combinedText += `\n--- [파일: ${f.name}] ---\n⚠️ ${msg}\n`;
-          if (hasYoutube)
-            combinedText += `\n--- [YouTube: ${youtubeUrl}] ---\n⚠️ ${msg}\n`;
+        }
+      }
+    }
+
+    // Process YouTube URL directly via Gemini (no backend needed)
+    const hasYoutube = youtubeUrl.trim().length > 0;
+    if (hasYoutube) {
+      if (!userApiKey) {
+        combinedText += `\n--- [YouTube] ---\n⚠️ YouTube 분석에는 API 키가 필요합니다.\n`;
+      } else {
+        setLoadingMsg('YouTube 영상 분석 중... (1-2분 소요)');
+        try {
+          const analysis = await analyzeYoutubeWithGemini(userApiKey, youtubeUrl);
+          combinedText += `\n--- [YouTube: ${youtubeUrl}] ---\n${analysis}\n`;
+        } catch (err) {
+          combinedText += `\n--- [YouTube: ${youtubeUrl}] ---\n⚠️ YouTube 분석 실패: ${err.message}\n`;
         }
       }
     }
@@ -463,7 +471,7 @@ const BlooketGenerator = () => {
                     type="url"
                     value={youtubeUrl}
                     onChange={e => setYoutubeUrl(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=... (영상 분석 서버 필요)"
+                    placeholder="https://youtube.com/watch?v=..."
                     className="flex-1 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-indigo-300"
                   />
                   {youtubeUrl && (
@@ -473,17 +481,12 @@ const BlooketGenerator = () => {
                         onClick={async () => {
                           if (!userApiKey) { setError('API 키가 필요합니다.'); return; }
                           setError('');
-                          setLoadingMsg('YouTube 영상 분석 중... (2-3분 소요)');
+                          setLoadingMsg('YouTube 영상 분석 중... (1-2분 소요)');
                           try {
-                            const result = await analyzeVideos(userApiKey, [], youtubeUrl);
-                            if (result.text) setTextContent(prev => prev + `\n${result.text}\n`);
+                            const analysis = await analyzeYoutubeWithGemini(userApiKey, youtubeUrl);
+                            setTextContent(prev => prev + `\n--- [YouTube: ${youtubeUrl}] ---\n${analysis}\n`);
                           } catch (err) {
-                            const msg = err.message;
-                            if (msg.includes('500') || msg.includes('fetch') || msg.includes('Failed') || msg.includes('NetworkError')) {
-                              setError('⚠️ 영상 분석 서버에 연결할 수 없습니다.');
-                            } else {
-                              setError('YouTube 분석 실패: ' + msg);
-                            }
+                            setError('YouTube 분석 실패: ' + err.message);
                           } finally { setLoadingMsg(''); }
                         }}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0 flex items-center gap-1 ${loadingMsg ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}

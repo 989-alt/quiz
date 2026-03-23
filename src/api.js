@@ -35,6 +35,49 @@ export async function analyzeVideos(apiKey, files, youtubeUrl = '') {
   return res.json();
 }
 
+// --- YouTube analysis (client-side, no backend needed) ---
+
+/**
+ * Analyze a YouTube video directly via Gemini API.
+ * Sends the YouTube URL as a fileData URI — Gemini fetches and analyzes the video itself.
+ */
+export async function analyzeYoutubeWithGemini(apiKey, youtubeUrl) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            {
+              fileData: {
+                fileUri: youtubeUrl,
+                mimeType: "video/*",
+              }
+            },
+            {
+              text: "이 영상의 내용을 상세하게 한국어로 정리해주세요. "
+                + "핵심 개념, 주요 내용, 중요 키워드를 포함해주세요. "
+                + "퀴즈 출제에 적합하도록 구체적인 사실과 정보를 정리해주세요."
+            }
+          ]
+        }]
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API Error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  if (!text) throw new Error('영상 분석 결과가 비어 있습니다.');
+  return text;
+}
+
 // --- Client-side Gemini API helpers ---
 
 /**
