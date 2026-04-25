@@ -1,0 +1,22 @@
+{
+  "name": "\ubbfc\uc8fc\uacf5\ud654\uad6d 24\uc2dc - \uacf5\uac1c \ub514\uc2a4\ud50c\ub808\uc774",
+  "short_name": "\ubbfc\uacf5\ub514\uc2a4\ud50c\ub808\uc774",
+  "description": "\ucd08\ub4f1\ud559\uc0dd\uc744 \uc704\ud55c \uc785\ubc95 \uc2dc\ubbac\ub808\uc774\uc158 - TV/\ud504\ub85c\uc81d\ud130 \ub514\uc2a4\ud50c\ub808\uc774",
+  "start_url": "/display",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0F1729",
+  "theme_color": "#7FD8BE",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

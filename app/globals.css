@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-party-ruling: #5B8A4E;
+  --color-party-opposition: #2E86AB;
+  --color-party-independent: #8B8680;
+  --color-navy: #1A2B4C;
+  --color-mint: #7FD8BE;
+  --color-coral: #E76F51;
+  --color-cream: #FAF8F3;
+  --color-slate-deep: #0F1729;
+  --color-pass: #4CAF50;
+  --color-fail: #E63946;
+  --color-alert: #F4A261;
+  --color-neutral: #6C757D;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
