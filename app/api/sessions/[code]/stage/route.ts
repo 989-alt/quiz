@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { awardStage4Scores, awardStage5Scores, broadcastScores } from '@/lib/scoring/scoreEngine'
 
 interface RouteParams {
   params: { code: string }
@@ -19,6 +20,53 @@ function stageToStatus(stage: number): string {
   return 'stage1'
 }
 
+async function judgeAllBills(sessionId: string, stage: 4 | 5): Promise<void> {
+  const { data: bills } = await adminClient
+    .from('bills')
+    .select('id, recall_used')
+    .eq('session_id', sessionId)
+
+  if (!bills?.length) return
+
+  const billsToJudge = stage === 5 ? bills.filter((b) => b.recall_used) : bills
+
+  await Promise.all(
+    billsToJudge.map(async (bill) => {
+      const { data } = await adminClient.rpc('judge_bill', {
+        p_bill_id: bill.id,
+        p_stage: stage,
+      })
+      if (!data) return
+      const result = (data as { result: string }).result
+      const updateCol = stage === 4
+        ? { stage4_result: result }
+        : { stage5_result: result }
+      await adminClient.from('bills').update(updateCol).eq('id', bill.id)
+    })
+  )
+}
+
+async function finalizeBills(sessionId: string): Promise<void> {
+  const { data: bills } = await adminClient
+    .from('bills')
+    .select('id, stage4_result, stage5_result')
+    .eq('session_id', sessionId)
+
+  if (!bills?.length) return
+
+  await Promise.all(
+    bills.map(async (bill) => {
+      const finalResult = bill.stage5_result ?? bill.stage4_result
+      if (finalResult) {
+        await adminClient
+          .from('bills')
+          .update({ final_result: finalResult })
+          .eq('id', bill.id)
+      }
+    })
+  )
+}
+
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const code = params.code.toUpperCase()
@@ -33,7 +81,6 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'teacherId and action are required' }, { status: 400 })
     }
 
-    // Verify teacher
     const { data: session, error: sessionError } = await adminClient
       .from('sessions')
       .select('id, teacher_id, status, current_stage, stage_ends_at')
@@ -65,9 +112,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       newEndsAt = new Date(Date.now() + durationMinutes * 60 * 1000)
     } else if (action === 'adjust') {
       newStage = session.current_stage
-      const currentEnds = session.stage_ends_at
-        ? new Date(session.stage_ends_at)
-        : new Date()
+      const currentEnds = session.stage_ends_at ? new Date(session.stage_ends_at) : new Date()
       newEndsAt = new Date(currentEnds.getTime() + (adjustMinutes ?? 1) * 60 * 1000)
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
@@ -81,6 +126,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         current_stage: newStage,
         status: newStatus,
         stage_ends_at: newEndsAt!.toISOString(),
+        ...(newStatus === 'ended' ? { ended_at: new Date().toISOString() } : {}),
       })
       .eq('id', session.id)
       .select()
@@ -95,6 +141,31 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       event: 'STAGE_CHANGE',
       payload: { session: updatedSession, stage: newStage, status: newStatus },
     })
+
+    // Bill judgment + scoring (non-fatal — runs after broadcast so UI updates first)
+    const broadcastBillsUpdated = () =>
+      adminClient.channel(`session:${code}`).send({
+        type: 'broadcast',
+        event: 'BILLS_UPDATED',
+        payload: {},
+      })
+
+    if (action === 'next') {
+      if (session.current_stage === 4) {
+        judgeAllBills(session.id, 4)
+          .then(broadcastBillsUpdated)
+          .then(() => awardStage4Scores(session.id))
+          .then(() => broadcastScores(session.id, code))
+          .catch((err) => console.error('Stage4 scoring error:', err))
+      } else if (session.current_stage === 5) {
+        judgeAllBills(session.id, 5)
+          .then(() => finalizeBills(session.id))
+          .then(broadcastBillsUpdated)
+          .then(() => awardStage5Scores(session.id))
+          .then(() => broadcastScores(session.id, code))
+          .catch((err) => console.error('Stage5 scoring error:', err))
+      }
+    }
 
     return NextResponse.json({ session: updatedSession })
   } catch (err) {

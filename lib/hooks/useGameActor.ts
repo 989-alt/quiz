@@ -47,6 +47,20 @@ export function useGameActor(classCode: string) {
       .catch(console.error)
   }, [classCode, session?.status])
 
+  // ── Load speech queue in stage3 ───────────────────────────
+  useEffect(() => {
+    if (session?.status !== 'stage3' || !classCode) return
+
+    fetch(`/api/sessions/${classCode}/speech`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.queue)) {
+          sendRef.current({ type: 'SPEECH_QUEUE_UPDATED', queue: data.queue })
+        }
+      })
+      .catch(console.error)
+  }, [classCode, session?.status])
+
   // ── Supabase Realtime → XState + Zustand ─────────────────
   useEffect(() => {
     if (!classCode) return
@@ -106,6 +120,32 @@ export function useGameActor(classCode: string) {
             rank: rank as number,
           })
         }
+      })
+      .on('broadcast', { event: 'SPEECH_REQUEST' }, () => {
+        if (!classCode) return
+        fetch(`/api/sessions/${classCode}/speech`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (Array.isArray(data.queue)) {
+              sendRef.current({ type: 'SPEECH_QUEUE_UPDATED', queue: data.queue })
+            }
+          })
+          .catch(console.error)
+      })
+      .on('broadcast', { event: 'SPEECH_QUEUE_UPDATED' }, ({ payload }) => {
+        if (Array.isArray(payload?.queue)) {
+          sendRef.current({ type: 'SPEECH_QUEUE_UPDATED', queue: payload.queue })
+        }
+      })
+      .on('broadcast', { event: 'BILLS_UPDATED' }, () => {
+        fetch(`/api/sessions/${classCode}/bills`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (Array.isArray(data.bills)) {
+              sendRef.current({ type: 'BILLS_LOADED', bills: data.bills as Bill[] })
+            }
+          })
+          .catch(console.error)
       })
       .subscribe()
 
