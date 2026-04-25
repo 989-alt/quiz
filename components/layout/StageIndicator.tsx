@@ -1,6 +1,5 @@
 import { cn } from '@/components/ui/cn'
-
-type StageNumber = 1 | 2 | 3 | 4 | 5
+import type { StageNumber } from '@/types'
 
 const STAGE_LABELS: Record<StageNumber, string> = {
   1: '\ubc95\uc548 \ubc1c\uc758',

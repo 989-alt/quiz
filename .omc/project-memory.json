@@ -1,0 +1,262 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777087841960,
+  "projectRoot": "C:\\Users\\hit\\Desktop\\바이브코딩 공모전\\democratic-republic-24h\\.claude\\worktrees\\naughty-mclaren-2441f4",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "Desktop": {
+      "path": "Desktop",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777087841913,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "lib\\supabase\\server.ts",
+      "accessCount": 6,
+      "lastAccessed": 1777089026488,
+      "type": "file"
+    },
+    {
+      "path": "components\\ui\\Timer.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777089013139,
+      "type": "file"
+    },
+    {
+      "path": "components\\ui\\Card.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777089016832,
+      "type": "file"
+    },
+    {
+      "path": "components\\layout\\StageIndicator.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1777089018095,
+      "type": "file"
+    },
+    {
+      "path": "middleware.ts",
+      "accessCount": 5,
+      "lastAccessed": 1777089028817,
+      "type": "file"
+    },
+    {
+      "path": "lib\\supabase\\client.ts",
+      "accessCount": 5,
+      "lastAccessed": 1777089042562,
+      "type": "file"
+    },
+    {
+      "path": "app\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777088752205,
+      "type": "file"
+    },
+    {
+      "path": "app\\student\\[code]\\page.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777088754578,
+      "type": "file"
+    },
+    {
+      "path": "types\\index.ts",
+      "accessCount": 4,
+      "lastAccessed": 1777088837510,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 4,
+      "lastAccessed": 1777088840342,
+      "type": "file"
+    },
+    {
+      "path": "lib\\supabase\\middleware.ts",
+      "accessCount": 4,
+      "lastAccessed": 1777088853586,
+      "type": "file"
+    },
+    {
+      "path": "app\\layout.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777089033236,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 3,
+      "lastAccessed": 1777088678451,
+      "type": "directory"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777088838002,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 3,
+      "lastAccessed": 1777088838784,
+      "type": "file"
+    },
+    {
+      "path": "next.config.js",
+      "accessCount": 3,
+      "lastAccessed": 1777088840612,
+      "type": "file"
+    },
+    {
+      "path": "components\\ui\\Button.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777088863515,
+      "type": "file"
+    },
+    {
+      "path": "components\\ui\\Badge.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777088865404,
+      "type": "file"
+    },
+    {
+      "path": "components\\ui\\cn.ts",
+      "accessCount": 3,
+      "lastAccessed": 1777088866175,
+      "type": "file"
+    },
+    {
+      "path": "app\\student\\[code]\\layout.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777088880247,
+      "type": "file"
+    },
+    {
+      "path": "app\\teacher\\[code]\\layout.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777088881003,
+      "type": "file"
+    },
+    {
+      "path": "app\\display\\[code]\\layout.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1777088881335,
+      "type": "file"
+    },
+    {
+      "path": "app\\globals.css",
+      "accessCount": 3,
+      "lastAccessed": 1777088881875,
+      "type": "file"
+    },
+    {
+      "path": "docs\\spec.md",
+      "accessCount": 2,
+      "lastAccessed": 1777088454548,
+      "type": "directory"
+    },
+    {
+      "path": "public\\manifest-student.json",
+      "accessCount": 2,
+      "lastAccessed": 1777088630863,
+      "type": "file"
+    },
+    {
+      "path": "public\\manifest-teacher.json",
+      "accessCount": 2,
+      "lastAccessed": 1777088631692,
+      "type": "file"
+    },
+    {
+      "path": "public\\manifest-display.json",
+      "accessCount": 2,
+      "lastAccessed": 1777088632054,
+      "type": "file"
+    },
+    {
+      "path": "postcss.config.js",
+      "accessCount": 1,
+      "lastAccessed": 1777088200158,
+      "type": "file"
+    },
+    {
+      "path": ".env.local.example",
+      "accessCount": 1,
+      "lastAccessed": 1777088201673,
+      "type": "file"
+    },
+    {
+      "path": "app\\teacher\\[code]\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777088258931,
+      "type": "file"
+    },
+    {
+      "path": "app\\display\\[code]\\page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1777088263290,
+      "type": "file"
+    },
+    {
+      "path": "public\\icons\\README.txt",
+      "accessCount": 1,
+      "lastAccessed": 1777088343886,
+      "type": "file"
+    },
+    {
+      "path": "components",
+      "accessCount": 1,
+      "lastAccessed": 1777088669940,
+      "type": "directory"
+    },
+    {
+      "path": "app",
+      "accessCount": 1,
+      "lastAccessed": 1777088675796,
+      "type": "directory"
+    },
+    {
+      "path": "lib",
+      "accessCount": 1,
+      "lastAccessed": 1777088677021,
+      "type": "directory"
+    },
+    {
+      "path": "lib\\env.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777089024120,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

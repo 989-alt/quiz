@@ -19,9 +19,7 @@ export function Timer({ seconds, className }: TimerProps) {
     <div
       className={cn(
         'font-mono font-bold tabular-nums transition-colors',
-        isDanger && 'text-fail animate-pulse-slow',
-        !isDanger && isAlert && 'text-alert',
-        !isAlert && 'text-navy',
+        isDanger ? 'text-fail animate-pulse-slow' : isAlert ? 'text-alert' : 'text-navy',
         className,
       )}
       role="timer"
