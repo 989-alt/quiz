@@ -112,6 +112,36 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Failed to assign roles' }, { status: 500 })
     }
 
+    // Copy bill templates into this session's bills
+    const { data: templates, error: templatesError } = await adminClient
+      .from('bill_templates')
+      .select('*')
+      .order('display_order', { ascending: true })
+
+    if (templatesError || !templates?.length) {
+      console.error('bill_templates fetch error:', templatesError)
+      return NextResponse.json({ error: 'Bill templates not found' }, { status: 500 })
+    }
+
+    const { error: billsError } = await adminClient.from('bills').insert(
+      templates.map((t) => ({
+        session_id: session.id,
+        bill_code: t.bill_code,
+        area: t.area,
+        title: t.title,
+        body: t.body,
+        important: t.important,
+        proposer_party: t.proposer_party,
+        co_proposer_ids: [],
+        display_order: t.display_order,
+      }))
+    )
+
+    if (billsError) {
+      console.error('Bills seed error:', billsError)
+      return NextResponse.json({ error: 'Failed to seed bills' }, { status: 500 })
+    }
+
     const now = new Date()
     const stageEndsAt = new Date(now.getTime() + 5 * 60 * 1000)
 
