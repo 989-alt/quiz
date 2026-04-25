@@ -1,0 +1,3 @@
+-- seed.sql
+-- 민주공화국 24시 시드 데이터
+-- T04에서 채워질 예정: 법안 풀, 공약 풀, bill_district_effects 등
