@@ -129,11 +129,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         ...(newStatus === 'ended' ? { ended_at: new Date().toISOString() } : {}),
       })
       .eq('id', session.id)
+      .eq('current_stage', session.current_stage)
       .select()
       .single()
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    if (updateError || !updatedSession) {
+      if (!updatedSession) {
+        return NextResponse.json({ error: 'Concurrent update conflict' }, { status: 409 })
+      }
+      return NextResponse.json({ error: updateError!.message }, { status: 500 })
     }
 
     await adminClient.channel(`session:${code}`).send({

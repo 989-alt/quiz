@@ -281,7 +281,7 @@ export default function TeacherPage({ params }: PageProps) {
           </div>
           <div className="bg-slate-deep rounded-card border border-white/10 p-6 text-center">
             <a
-              href={`/api/sessions/${code}/pdf`}
+              href={`/api/sessions/${code}/pdf?teacherId=${teacherId}`}
               download
               className="inline-block px-6 py-3 bg-mint text-navy font-bold rounded-lg hover:bg-mint/90 transition-colors"
             >

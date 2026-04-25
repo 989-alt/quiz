@@ -30,9 +30,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    if (session.status !== 'stage4' && session.status !== 'stage5') {
+    if (session.status !== 'stage4') {
       return NextResponse.json(
-        { error: 'Recall only allowed during stage4 or stage5' },
+        { error: 'Recall only allowed during stage4' },
         { status: 409 }
       )
     }

@@ -61,7 +61,6 @@ const SPECIALTY_MAP: Record<string, string> = {
   'EDU': '\uad50\uc721\uc804\ubb38\uac00',
   'ECO': '\uacbd\uc81c\uc804\ubb38\uac00',
   'ENV': '\ud658\uacbd\ud65c\ub3d9\uac00',
-  'SOC': '\ubcf5\uc9c0\uc804\ubb38\uac00',
 }
 
 export function specialtyFromPledge(pledgeCode: string): string {
@@ -74,17 +73,22 @@ export const PLAYER_PLEDGE_CODES = [
   'EDU-01', 'EDU-02', 'EDU-03',
   'ECO-01', 'ECO-02', 'ECO-03',
   'ENV-01', 'ENV-02',
-  'SOC-01', 'SOC-02',
+  'ECO-04', 'ENV-03',
 ] as const
 
 // pledge_difficulty assigned by player index (cycles easy→medium→hard)
 export const PLEDGE_DIFFICULTIES: PledgeDifficulty[] = ['easy', 'medium', 'hard']
 
-// 10 districts assigned in order (must match seeds/001_game_data.sql)
+// 10 districts assigned in order (must match bill_district_effects seed data)
 export const DISTRICTS = [
-  '\uc11c\uc6b8\uac11', '\uc11c\uc6b8\uc744',
-  '\ubd80\uc0b0\uac11', '\ubd80\uc0b0\uc744',
-  '\uc778\ucc9c\uac11', '\uc778\ucc9c\uc744',
-  '\ub300\uad6c\uac11', '\ub300\uad6c\uc744',
-  '\uad11\uc8fc\uac11', '\uad11\uc8fc\uc744',
+  '\uc218\ub3c4\uad8c \uc2e0\ub3c4\uc2dc',
+  '\ub18d\ucd0c \uad70 \ub2e8\uc704',
+  '\uad11\uc5ed\uc2dc \uad6c\ub3c4\uc2ec',
+  '\uc0b0\uc5c5 \ub2e8\uc9c0',
+  '\uad00\uad11 \ub3c4\uc2dc',
+  '\ub300\ud559 \ub3c4\uc2dc',
+  '\uc5b4\ucd0c \uc9c0\uc5ed',
+  '\uc811\uacbd \uc9c0\uc5ed',
+  'IT \uc2e0\ub3c4\uc2dc',
+  '\uc804\ud1b5\uc2dc\uc7a5 \ubc00\uc9d1\uc9c0',
 ] as const

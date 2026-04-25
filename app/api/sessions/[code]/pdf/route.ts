@@ -11,9 +11,10 @@ interface RouteParams {
   params: { code: string }
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const code = params.code.toUpperCase()
+    const teacherId = new URL(req.url).searchParams.get('teacherId')
 
     const { data: session } = await adminClient
       .from('sessions')
@@ -23,6 +24,10 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+
+    if (!teacherId || session.teacher_id !== teacherId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     const [{ data: players }, { data: bills }] = await Promise.all([
