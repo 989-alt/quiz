@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // Verify teacher
     const { data: session, error: sessionError } = await adminClient
       .from('sessions')
-      .select('id, teacher_id, current_stage, stage_ends_at')
+      .select('id, teacher_id, status, current_stage, stage_ends_at')
       .eq('class_code', code)
       .single()
 
@@ -46,6 +46,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     if (session.teacher_id !== teacherId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    if (session.status === 'ended' && action !== 'adjust') {
+      return NextResponse.json({ error: 'Session already ended' }, { status: 409 })
     }
 
     let newStage = session.current_stage

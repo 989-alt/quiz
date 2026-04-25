@@ -53,19 +53,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     // Insert player (pending = is_online: false)
+    // party/district/specialty/pledge_code/pledge_difficulty: NULL until game start
     const { data: player, error: insertError } = await adminClient
       .from('players')
       .insert({
         session_id: session.id,
         name,
         device_token: deviceToken,
-        party: '',
-        district: '',
-        specialty: '',
-        pledge_code: '',
-        pledge_difficulty: 1,
         score: 0,
-        rank: 0,
         is_online: false,
       })
       .select('id')

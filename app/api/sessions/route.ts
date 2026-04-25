@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
         .from('sessions')
         .select('id')
         .eq('class_code', candidate)
-        .eq('status', 'waiting')
         .single()
 
       if (!existing) {
@@ -34,12 +33,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate unique class code' }, { status: 500 })
     }
 
-    const defaultWeights = {
-      participation: 30,
-      argument: 40,
-      cooperation: 30,
-    }
-
     const { data: session, error } = await adminClient
       .from('sessions')
       .insert({
@@ -47,7 +40,6 @@ export async function POST(req: NextRequest) {
         teacher_id: teacherId,
         status: 'waiting',
         current_stage: 0,
-        weights: defaultWeights,
         settings: {},
       })
       .select()

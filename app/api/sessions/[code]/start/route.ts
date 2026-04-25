@@ -50,12 +50,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Count approved players
+    // Count approved players (ordered by join time for deterministic role assignment)
     const { data: approvedPlayers, error: playersError } = await adminClient
       .from('players')
       .select('id')
       .eq('session_id', session.id)
       .eq('is_online', true)
+      .order('joined_at', { ascending: true })
 
     if (playersError) {
       return NextResponse.json({ error: playersError.message }, { status: 500 })
@@ -84,23 +85,31 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         party,
         district: DISTRICTS[i % DISTRICTS.length],
         pledge_code: PLEDGE_CODES[i % PLEDGE_CODES.length],
-        pledge_difficulty: (i % 3) + 1,
+        pledge_difficulty: (['easy', 'medium', 'hard'] as const)[i % 3],
         specialty: '\uc77c\ubc18',
       }
     })
 
-    // Batch update players
-    for (const update of roleUpdates) {
-      await adminClient
-        .from('players')
-        .update({
-          party: update.party,
-          district: update.district,
-          pledge_code: update.pledge_code,
-          pledge_difficulty: update.pledge_difficulty,
-          specialty: update.specialty,
-        })
-        .eq('id', update.id)
+    // Batch update players (parallel, fail-fast before session state change)
+    const updateResults = await Promise.all(
+      roleUpdates.map((update) =>
+        adminClient
+          .from('players')
+          .update({
+            party: update.party,
+            district: update.district,
+            pledge_code: update.pledge_code,
+            pledge_difficulty: update.pledge_difficulty,
+            specialty: update.specialty,
+          })
+          .eq('id', update.id)
+      )
+    )
+
+    const failedUpdate = updateResults.find((r) => r.error)
+    if (failedUpdate?.error) {
+      console.error('Player role update error:', failedUpdate.error)
+      return NextResponse.json({ error: 'Failed to assign roles' }, { status: 500 })
     }
 
     const now = new Date()
