@@ -1,11 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { useGameActor } from '@/lib/hooks/useGameActor'
 import { StageIndicator } from '@/components/layout/StageIndicator'
 import { Timer } from '@/components/ui/Timer'
+import { EventCountdown } from '@/components/ui/EventCountdown'
+import { EventPanel } from '@/components/ui/EventPanel'
 import { STAGE_LABELS } from '@/lib/machines/gameMachine'
+import { STAGE_DURATIONS } from '@/lib/gameConfig'
+import type { EventSettings, EventSlot } from '@/lib/eventScheduler'
+import type { EventCardType } from '@/lib/gameConfig'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
 import type { Player, Session, SpeechRequest } from '@/lib/types'
 import type { StageNumber } from '@/types'
 
@@ -54,6 +60,16 @@ export default function TeacherPage({ params }: PageProps) {
   const [startLoading, setStartLoading] = useState(false)
   const [stageLoading, setStageLoading] = useState(false)
   const [startError, setStartError] = useState('')
+  const [eventSettings, setEventSettings] = useState<EventSettings | null>(null)
+  const [eventLoading, setEventLoading] = useState(false)
+  const [countdown, setCountdown] = useState<{ slot: EventSlot; secondsLeft: number } | null>(null)
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // T15: player grid controls
+  const [compact, setCompact] = useState(false)
+  const [filterQuery, setFilterQuery] = useState('')
+  const [filterParty, setFilterParty] = useState<string | null>(null)
+  const [showSpeechOnly, setShowSpeechOnly] = useState(false)
 
   const { stageValue, context, send } = useGameActor(code)
   const timerSeconds = useCountdown(session?.stage_ends_at)
@@ -72,6 +88,9 @@ export default function TeacherPage({ params }: PageProps) {
         const data = await res.json()
         setSession(data.session as Session)
         setPlayers(data.players as Player[])
+        if (data.session?.event_settings) {
+          setEventSettings(data.session.event_settings as EventSettings)
+        }
         // Sync XState if session already in progress
         if (data.session?.status && data.session.status !== 'waiting') {
           send({ type: 'SYNC', status: data.session.status, session: data.session })
@@ -85,6 +104,69 @@ export default function TeacherPage({ params }: PageProps) {
     bootstrap()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code])
+
+  // Supabase broadcast: EVENT_SETTINGS_UPDATED
+  useEffect(() => {
+    const supabase = createSupabaseClient()
+    const channel = supabase
+      .channel(`session:${code}`)
+      .on(
+        'broadcast',
+        { event: 'EVENT_SETTINGS_UPDATED' },
+        (msg: { payload: { event_settings: EventSettings } }) => {
+          setEventSettings(msg.payload.event_settings)
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code])
+
+  // Countdown ticker: check for pending slots in current stage
+  useEffect(() => {
+    if (!eventSettings?.auto_enabled || !session?.stage_ends_at || !session?.current_stage) return
+    const currentStage = session.current_stage as 2 | 3 | 4
+    if (currentStage < 2 || currentStage > 4) return
+
+    const stageDurationMs = (STAGE_DURATIONS[currentStage] ?? 10) * 60 * 1000
+    const stageEndsAt = new Date(session.stage_ends_at).getTime()
+    const stageStartedAt = stageEndsAt - stageDurationMs
+
+    const pendingSlot = eventSettings.slots.find(
+      (s) => s.stage === currentStage && !s.triggered && !s.skipped
+    )
+    if (!pendingSlot) {
+      setCountdown(null)
+      return
+    }
+
+    const triggerTime = stageStartedAt + stageDurationMs * pendingSlot.offsetRatio
+
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current)
+
+    countdownTimerRef.current = setInterval(() => {
+      const msLeft = triggerTime - Date.now()
+      const secondsLeft = Math.max(0, Math.round(msLeft / 1000))
+      if (secondsLeft <= 5) {
+        setCountdown({ slot: pendingSlot, secondsLeft })
+      }
+      if (msLeft <= 0) {
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current)
+        setCountdown(null)
+        // Auto-fire when time expires and auto_enabled is on
+        if (eventSettings?.auto_enabled) {
+          handleFireEvent(pendingSlot.eventType, pendingSlot.id)
+        }
+      }
+    }, 500)
+
+    return () => {
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventSettings, session?.stage_ends_at, session?.current_stage])
 
   async function handleApprove(playerId: string, action: 'approve' | 'reject') {
     setApproveLoading(playerId)
@@ -114,6 +196,9 @@ export default function TeacherPage({ params }: PageProps) {
         return
       }
       setSession(data.session as Session)
+      if (data.session?.event_settings) {
+        setEventSettings(data.session.event_settings as EventSettings)
+      }
     } catch {
       setStartError('\ub124\ud2b8\uc6cc\ud06c \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.')
     } finally {
@@ -150,6 +235,64 @@ export default function TeacherPage({ params }: PageProps) {
     })
   }
 
+  async function handleFireEvent(eventType: EventCardType, slotId?: string) {
+    setEventLoading(true)
+    setCountdown(null)
+    try {
+      await fetch(`/api/sessions/${code}/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId, eventType, slotId }),
+      })
+      // Optimistically mark slot triggered
+      if (slotId && eventSettings) {
+        setEventSettings({
+          ...eventSettings,
+          slots: eventSettings.slots.map((s) =>
+            s.id === slotId ? { ...s, triggered: true } : s
+          ),
+        })
+      }
+    } finally {
+      setEventLoading(false)
+    }
+  }
+
+  async function handleSkipSlot(slotId: string) {
+    setEventLoading(true)
+    try {
+      const res = await fetch(`/api/sessions/${code}/event`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId, action: 'skip', slotId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.event_settings) {
+        setEventSettings(data.event_settings as EventSettings)
+      }
+      if (countdown?.slot.id === slotId) setCountdown(null)
+    } finally {
+      setEventLoading(false)
+    }
+  }
+
+  async function handleToggleAuto() {
+    setEventLoading(true)
+    try {
+      const res = await fetch(`/api/sessions/${code}/event`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId, action: 'toggle_auto' }),
+      })
+      const data = await res.json()
+      if (res.ok && data.event_settings) {
+        setEventSettings(data.event_settings as EventSettings)
+      }
+    } finally {
+      setEventLoading(false)
+    }
+  }
+
   // ── Loading ──
   if (loading) {
     return (
@@ -180,6 +323,23 @@ export default function TeacherPage({ params }: PageProps) {
 
   // Player name lookup for speech queue
   const playerNameMap = new Map(context.players.map((p) => [p.id, p.name]))
+
+  // T15: grid filtering
+  const speechPlayerIds = new Set(context.speechQueue.map((r) => r.player_id))
+  const filteredPlayers = [...context.players]
+    .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99))
+    .filter((p) => {
+      if (showSpeechOnly && !speechPlayerIds.has(p.id)) return false
+      if (filterParty && p.party !== filterParty) return false
+      if (filterQuery) {
+        const q = filterQuery.toLowerCase()
+        if (!(p.name?.toLowerCase().includes(q) || p.district?.toLowerCase().includes(q))) return false
+      }
+      return true
+    })
+
+  // Responsive grid cols based on player count (inline style for Tailwind purge safety)
+  const gridCols = context.players.length <= 12 ? 5 : context.players.length <= 20 ? 5 : 6
 
   // ── Waiting ──
   if (isWaiting) {
@@ -319,6 +479,15 @@ export default function TeacherPage({ params }: PageProps) {
   // ── Playing ──
   return (
     <main className="min-h-screen bg-navy flex flex-col">
+      {/* Event countdown overlay */}
+      {countdown && (
+        <EventCountdown
+          eventType={countdown.slot.eventType}
+          secondsLeft={countdown.secondsLeft}
+          onFire={() => handleFireEvent(countdown.slot.eventType, countdown.slot.id)}
+          onSkip={() => handleSkipSlot(countdown.slot.id)}
+        />
+      )}
       {/* Sticky header */}
       <header className="bg-slate-deep border-b border-white/10 px-6 py-3 sticky top-0 z-10">
         <div className="w-full max-w-4xl mx-auto flex items-center gap-4">
@@ -384,39 +553,107 @@ export default function TeacherPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Event panel */}
+          {isPlaying && (
+            <EventPanel
+              eventSettings={eventSettings}
+              currentStage={session?.current_stage ?? 0}
+              onToggleAuto={handleToggleAuto}
+              onSkipSlot={handleSkipSlot}
+              onForceEvent={(eventType) => handleFireEvent(eventType)}
+              loading={eventLoading}
+            />
+          )}
+
           {/* Player grid */}
           <div className="bg-slate-deep rounded-card border border-white/10 p-4 space-y-3">
-            <h3 className="text-white font-semibold">
-              \ud559\uc0dd \ud604\ud669 ({context.players.length}\uba85)
-            </h3>
+            {/* Controls row */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="text-white font-semibold">
+                \ud559\uc0dd \ud604\ud669 ({filteredPlayers.length}/{context.players.length}\uba85)
+              </h3>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <input
+                  type="text"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  placeholder="\uc774\ub984\u00b7\uc9c0\uc5ed\uad6c"
+                  className="px-2 py-1 bg-navy rounded text-white text-xs placeholder-neutral/60 border border-white/10 w-24"
+                />
+                {([null, '\uc5ec', '\uc57c', '\ubb34'] as const).map((p) => (
+                  <button
+                    key={String(p)}
+                    onClick={() => setFilterParty(filterParty === p ? null : p)}
+                    className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                      filterParty === p ? 'bg-mint text-navy' : 'bg-white/10 text-neutral hover:bg-white/20'
+                    }`}
+                  >
+                    {p === null ? '\uc804\uccb4' : p === '\uc5ec' ? '\uc5ec\ub2f9' : p === '\uc57c' ? '\uc57c\ub2f9' : '\ubb34\uc18c\uc18d'}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowSpeechOnly(!showSpeechOnly)}
+                  className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                    showSpeechOnly ? 'bg-yellow-400 text-black' : 'bg-white/10 text-neutral hover:bg-white/20'
+                  }`}
+                >
+                  \ud559\uc0dd\uc5b8\uae09
+                </button>
+                <button
+                  onClick={() => setCompact(!compact)}
+                  className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
+                    compact ? 'bg-mint text-navy' : 'bg-white/10 text-neutral hover:bg-white/20'
+                  }`}
+                >
+                  {compact ? '\uac04\ub7b5' : '\uc0c1\uc138'}
+                </button>
+              </div>
+            </div>
+
             {context.players.length === 0 ? (
               <p className="text-neutral text-sm">\ud559\uc0dd \ub370\uc774\ud130 \ub85c\ub529 \uc911...</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {[...context.players]
-                  .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99))
-                  .map((p) => {
-                    const partyBg = PARTY_BG[p.party ?? '\ubb34'] ?? 'bg-party-independent'
-                    const partyShort = PARTY_SHORT[p.party ?? '\ubb34']
+              <div className={`grid gap-1.5 grid-cols-3 sm:grid-cols-4 md:grid-cols-${gridCols}`}>
+                {filteredPlayers.map((p) => {
+                  const partyBg = PARTY_BG[p.party ?? '\ubb34'] ?? 'bg-party-independent'
+                  const partyShort = PARTY_SHORT[p.party ?? '\ubb34']
+                  const hasSpeech = speechPlayerIds.has(p.id)
+
+                  if (compact) {
                     return (
-                      <div
-                        key={p.id}
-                        className="bg-navy rounded-lg p-3 space-y-1.5"
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <span className={`px-1.5 py-0.5 rounded text-white text-xs font-bold ${partyBg}`}>
+                      <div key={p.id} className={`bg-navy rounded p-2 flex flex-col gap-0.5 ${hasSpeech ? 'ring-1 ring-yellow-400/50' : ''}`}>
+                        <div className="flex items-center gap-1 justify-between">
+                          <span className={`px-1 py-0.5 rounded text-white text-[10px] font-bold ${partyBg}`}>
                             {partyShort}
                           </span>
-                          {p.rank != null && (
-                            <span className="text-mint text-xs font-mono">{p.rank}\uc704</span>
-                          )}
+                          {hasSpeech && <span className="text-yellow-400 text-[10px]">\u25b6</span>}
                         </div>
-                        <p className="text-white font-semibold text-sm truncate">{p.name}</p>
-                        <p className="text-neutral text-xs truncate">{p.district ?? ''}</p>
-                        <p className="text-mint font-mono font-bold text-sm">{p.score}\uc810</p>
+                        <p className="text-white text-xs font-semibold truncate">{p.name}</p>
+                        <p className="text-mint font-mono text-[10px]">{p.score}\uc810</p>
                       </div>
                     )
-                  })}
+                  }
+
+                  return (
+                    <div
+                      key={p.id}
+                      className={`bg-navy rounded-lg p-3 space-y-1.5 ${hasSpeech ? 'ring-1 ring-yellow-400/50' : ''}`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-1.5 py-0.5 rounded text-white text-xs font-bold ${partyBg}`}>
+                          {partyShort}
+                        </span>
+                        {p.rank != null && (
+                          <span className="text-mint text-xs font-mono">{p.rank}\uc704</span>
+                        )}
+                        {hasSpeech && <span className="text-yellow-400 text-xs">\u25b6</span>}
+                      </div>
+                      <p className="text-white font-semibold text-sm truncate">{p.name}</p>
+                      <p className="text-neutral text-xs truncate">{p.district ?? ''}</p>
+                      <p className="text-mint font-mono font-bold text-sm">{p.score}\uc810</p>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

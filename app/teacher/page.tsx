@@ -8,6 +8,7 @@ export default function TeacherLandingPage() {
   const router = useRouter()
   const initDeviceToken = useSessionStore((s) => s.initDeviceToken)
   const setSession = useSessionStore((s) => s.setSession)
+  const [playerCount, setPlayerCount] = useState(10)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -19,7 +20,7 @@ export default function TeacherLandingPage() {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teacherId }),
+        body: JSON.stringify({ teacherId, playerCount }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -40,14 +41,31 @@ export default function TeacherLandingPage() {
       <div className="w-full max-w-md bg-slate-deep rounded-card border border-white/10 p-8 text-center space-y-6">
         <div>
           <h1 className="text-headline font-bold text-white mb-2">
-            \ubbfc\uc8fc\uacf5\ud654\uad6d 24\uc2dc
+            {'\ubbfc\uc8fc\uacf5\ud654\uad6d 24\uc2dc'}
           </h1>
-          <p className="text-neutral text-sm">\uad50\uc0ac \ucf58\uc194</p>
+          <p className="text-neutral text-sm">{'\uad50\uc0ac \ucf58\uc194'}</p>
         </div>
 
         {error && (
           <p className="text-red-400 text-sm bg-red-900/20 rounded-md px-3 py-2">{error}</p>
         )}
+
+        <div className="space-y-2">
+          <label className="text-neutral text-sm">
+            {'\uc9c0\uc5ed\uad6c \uc218 (10\ub2f8 ~ 30\ub2f8)'}
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={10}
+              max={30}
+              value={playerCount}
+              onChange={(e) => setPlayerCount(Number(e.target.value))}
+              className="flex-1 accent-mint"
+            />
+            <span className="text-white font-semibold w-8 text-center">{playerCount}</span>
+          </div>
+        </div>
 
         <button
           onClick={handleCreate}

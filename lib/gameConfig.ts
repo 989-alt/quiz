@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { PledgeDifficulty } from '@/lib/types'
+import DISTRICTS_JSON from '@/lib/data/districts.json'
 
 // Stage durations in minutes
 export const STAGE_DURATIONS: Record<number, number> = {
@@ -68,7 +69,7 @@ export function specialtyFromPledge(pledgeCode: string): string {
   return SPECIALTY_MAP[prefix] ?? '\uc77c\ubc18'
 }
 
-// Ordered pledge codes assigned to players 1-10 at game start
+// Ordered pledge codes assigned to players 1-10 at game start (backward compat)
 export const PLAYER_PLEDGE_CODES = [
   'EDU-01', 'EDU-02', 'EDU-03',
   'ECO-01', 'ECO-02', 'ECO-03',
@@ -76,19 +77,21 @@ export const PLAYER_PLEDGE_CODES = [
   'ECO-04', 'ENV-03',
 ] as const
 
+// All 30 pledge codes (EDU/ENV/ECO × 10)
+export const ALL_PLEDGE_CODES = [
+  'EDU-01', 'EDU-02', 'EDU-03', 'EDU-04', 'EDU-05',
+  'EDU-06', 'EDU-07', 'EDU-08', 'EDU-09', 'EDU-10',
+  'ENV-01', 'ENV-02', 'ENV-03', 'ENV-04', 'ENV-05',
+  'ENV-06', 'ENV-07', 'ENV-08', 'ENV-09', 'ENV-10',
+  'ECO-01', 'ECO-02', 'ECO-03', 'ECO-04', 'ECO-05',
+  'ECO-06', 'ECO-07', 'ECO-08', 'ECO-09', 'ECO-10',
+] as const
+
 // pledge_difficulty assigned by player index (cycles easy→medium→hard)
 export const PLEDGE_DIFFICULTIES: PledgeDifficulty[] = ['easy', 'medium', 'hard']
 
-// 10 districts assigned in order (must match bill_district_effects seed data)
-export const DISTRICTS = [
-  '\uc218\ub3c4\uad8c \uc2e0\ub3c4\uc2dc',
-  '\ub18d\ucd0c \uad70 \ub2e8\uc704',
-  '\uad11\uc5ed\uc2dc \uad6c\ub3c4\uc2ec',
-  '\uc0b0\uc5c5 \ub2e8\uc9c0',
-  '\uad00\uad11 \ub3c4\uc2dc',
-  '\ub300\ud559 \ub3c4\uc2dc',
-  '\uc5b4\ucd0c \uc9c0\uc5ed',
-  '\uc811\uacbd \uc9c0\uc5ed',
-  'IT \uc2e0\ub3c4\uc2dc',
-  '\uc804\ud1b5\uc2dc\uc7a5 \ubc00\uc9d1\uc9c0',
-] as const
+// All 30 districts from JSON (source of truth)
+export const ALL_DISTRICTS: readonly string[] = DISTRICTS_JSON
+
+// 10 districts for backward compatibility (first 10 of ALL_DISTRICTS)
+export const DISTRICTS = ALL_DISTRICTS.slice(0, 10) as string[]
