@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/supabase/admin'
-import { DISTRICTS, PLAYER_PLEDGE_CODES, PLEDGE_DIFFICULTIES, specialtyFromPledge } from '@/lib/gameConfig'
+import { distributeRoles } from '@/lib/distribution'
+import { generateEventSlots } from '@/lib/eventScheduler'
 
 interface RouteParams {
   params: { code: string }
@@ -43,33 +44,27 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: playersError.message }, { status: 500 })
     }
 
-    const playerCount = approvedPlayers?.length ?? 0
-
-    if (playerCount < 2) {
+    if (!approvedPlayers || approvedPlayers.length < 2) {
       return NextResponse.json({ error: 'Need at least 2 approved players' }, { status: 409 })
     }
 
-    if (playerCount > 10) {
-      return NextResponse.json({ error: 'Max 10 players allowed' }, { status: 409 })
+    const playerCount = approvedPlayers.length
+
+    if (playerCount > 30) {
+      return NextResponse.json({ error: 'Max 30 players allowed' }, { status: 409 })
     }
 
-    // Assign roles (deterministic — players ordered by joined_at ASC)
-    const roleUpdates = approvedPlayers!.map((p, i) => {
-      const idx = i + 1
-      let party: string
-      if (idx <= 4) party = '\uc5ec'
-      else if (idx <= 8) party = '\uc57c'
-      else party = '\ubb34'
-
-      const pledgeCode = PLAYER_PLEDGE_CODES[i % PLAYER_PLEDGE_CODES.length]
-
+    // Assign roles via distributeRoles (shuffled parties/districts/pledges)
+    const assignments = distributeRoles(playerCount)
+    const roleUpdates = approvedPlayers.map((p, i) => {
+      const a = assignments[i]
       return {
         id: p.id,
-        party,
-        district: DISTRICTS[i % DISTRICTS.length],
-        pledge_code: pledgeCode,
-        pledge_difficulty: PLEDGE_DIFFICULTIES[i % 3],
-        specialty: specialtyFromPledge(pledgeCode),
+        party: a.party,
+        district: a.district,
+        pledge_code: a.pledgeCode,
+        pledge_difficulty: a.pledgeDifficulty,
+        specialty: a.specialty,
       }
     })
 
@@ -92,6 +87,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const failedUpdate = updateResults.find((r) => r.error)
     if (failedUpdate?.error) {
       console.error('Player role update error:', failedUpdate.error)
+      // Rollback partial assignments so start can be retried cleanly
+      await adminClient
+        .from('players')
+        .update({ party: null, district: null, pledge_code: null, pledge_difficulty: null, specialty: null })
+        .eq('session_id', session.id)
       return NextResponse.json({ error: 'Failed to assign roles' }, { status: 500 })
     }
 
@@ -128,14 +128,21 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const now = new Date()
     const stageEndsAt = new Date(now.getTime() + 5 * 60 * 1000)
 
+    const eventSettings = {
+      auto_enabled: true,
+      slots: generateEventSlots(3),
+    }
+
     // Update session to stage1
     const { data: updatedSession, error: updateError } = await adminClient
       .from('sessions')
       .update({
         status: 'stage1',
         current_stage: 1,
+        player_count: playerCount,
         started_at: now.toISOString(),
         stage_ends_at: stageEndsAt.toISOString(),
+        event_settings: eventSettings,
       })
       .eq('id', session.id)
       .select()

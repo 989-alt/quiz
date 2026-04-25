@@ -27,14 +27,14 @@ export default function StudentLandingPage() {
       <div className="w-full max-w-md bg-white rounded-card shadow-sm p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-headline font-bold text-navy mb-2">
-            \ubbfc\uc8fc\uacf5\ud654\uad6d 24\uc2dc
+            {'\ubbfc\uc8fc\uacf5\ud654\uad6d 24\uc2dc'}
           </h1>
-          <p className="text-neutral text-sm">\ud559\uc0dd \uc785\uc7a5</p>
+          <p className="text-neutral text-sm">{'\ud559\uc0dd \uc785\uc7a5'}</p>
         </div>
 
         <div className="space-y-3">
           <label className="block text-sm font-medium text-navy">
-            \uc138\uc158 \ucf54\ub4dc \uc785\ub825
+            {'\uc138\uc158 \ucf54\ub4dc \uc785\ub825'}
           </label>
           <input
             type="text"
@@ -55,7 +55,7 @@ export default function StudentLandingPage() {
           onClick={handleJoin}
           className="w-full py-4 bg-navy text-white font-semibold rounded-lg hover:bg-navy/90 transition-colors text-title-2"
         >
-          \uc785\uc7a5\ud558\uae30
+          {'\uc785\uc7a5\ud558\uae30'}
         </button>
       </div>
     </main>
