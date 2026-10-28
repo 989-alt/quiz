@@ -2,6 +2,9 @@
 // Configure VITE_API_URL for production (e.g., Render URL)
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+// 'latest' alias keeps working when Google retires a specific Flash version.
+const GEMINI_MODEL = 'gemini-flash-latest';
+
 /**
  * Send video files or YouTube URL to backend for analysis.
  * Only used for video — PDF/images/HWPX are handled client-side.
@@ -43,7 +46,7 @@ export async function analyzeVideos(apiKey, files, youtubeUrl = '') {
  */
 export async function analyzeYoutubeWithGemini(apiKey, youtubeUrl) {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -111,7 +114,7 @@ export async function analyzeFileWithGemini(apiKey, file, prompt) {
   const mimeType = mimeMap[ext] || file.type || 'application/octet-stream';
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -196,7 +199,7 @@ ${text.slice(0, 30000)}
 `;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

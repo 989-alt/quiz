@@ -245,7 +245,7 @@ async def summarize_long_text(client: genai.Client, texts_by_file: dict, budget_
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-flash-latest",
             contents=summary_prompt,
         )
         summarized = response.text
@@ -397,7 +397,7 @@ async def analyze_content(
                         texts.append("⏳ 자막 없음 — Gemini로 영상 분석 중... (1-2분 소요)")
                         try:
                             yt_response = client.models.generate_content(
-                                model="gemini-2.5-flash",
+                                model="gemini-flash-latest",
                                 contents=[
                                     types.Content(
                                         parts=[
@@ -456,7 +456,7 @@ async def analyze_content(
 
             try:
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-flash-latest",
                     contents=content_parts,
                 )
 
@@ -526,7 +526,7 @@ def _generate_batch_sync(client: genai.Client, content_text: str, count: int, hi
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-flash-latest",
             contents=prompt,
             config=types.GenerateContentConfig(response_mime_type="application/json"),
         )
